@@ -8,20 +8,23 @@ namespace SignaturePad.Forms
 {
     public class SignaturePadView : View
     {
-        public static readonly BindableProperty CaptionTextProperty = BindableProperty.Create(nameof(CaptionText), typeof(string), typeof(SignaturePadView), null);
         public static readonly BindableProperty CaptionTextColorProperty = BindableProperty.Create(nameof(CaptionTextColor), typeof(Color), typeof(SignaturePadView), Color.Default);
-        public static readonly BindableProperty ClearTextProperty = BindableProperty.Create(nameof(ClearText), typeof(string), typeof(SignaturePadView), null);
+        public static readonly BindableProperty CaptionTextProperty = BindableProperty.Create(nameof(CaptionText), typeof(string), typeof(SignaturePadView), null);
         public static readonly BindableProperty ClearTextColorProperty = BindableProperty.Create(nameof(ClearTextColor), typeof(Color), typeof(SignaturePadView), Color.Default);
-        public static readonly BindableProperty PromptTextProperty = BindableProperty.Create(nameof(PromptText), typeof(string), typeof(SignaturePadView), null);
+        public static readonly BindableProperty ClearTextProperty = BindableProperty.Create(nameof(ClearText), typeof(string), typeof(SignaturePadView), null);
         public static readonly BindableProperty PromptTextColorProperty = BindableProperty.Create(nameof(PromptTextColor), typeof(Color), typeof(SignaturePadView), Color.Default);
+        public static readonly BindableProperty PromptTextProperty = BindableProperty.Create(nameof(PromptText), typeof(string), typeof(SignaturePadView), null);
         public static readonly BindableProperty SignatureLineColorProperty = BindableProperty.Create(nameof(SignatureLineColor), typeof(Color), typeof(SignaturePadView), Color.Default);
         public static readonly BindableProperty StrokeColorProperty = BindableProperty.Create(nameof(StrokeColor), typeof(Color), typeof(SignaturePadView), Color.Default);
         public static readonly BindableProperty StrokeWidthProperty = BindableProperty.Create(nameof(StrokeWidth), typeof(float), typeof(SignaturePadView), (float)0);
 
-        public bool IsBlank
-        {
-            get { return RequestIsBlank(); }
-        }
+        internal event EventHandler<ImageStreamRequestedEventArgs> ImageStreamRequested;
+
+        internal event EventHandler<IsBlankRequestedEventArgs> IsBlankRequested;
+
+        internal event EventHandler<PointsEventArgs> PointsRequested;
+
+        internal event EventHandler<PointsEventArgs> PointsSpecified;
 
         public string CaptionText
         {
@@ -47,6 +50,17 @@ namespace SignaturePad.Forms
             set { SetValue(ClearTextColorProperty, value); }
         }
 
+        public bool IsBlank
+        {
+            get { return RequestIsBlank(); }
+        }
+
+        public IEnumerable<Point> Points
+        {
+            get { return GetSignaturePoints(); }
+            set { SetSignaturePoints(value); }
+        }
+
         public string PromptText
         {
             get { return (string)GetValue(PromptTextProperty); }
@@ -65,22 +79,16 @@ namespace SignaturePad.Forms
             set { SetValue(SignatureLineColorProperty, value); }
         }
 
-        public float StrokeWidth
-        {
-            get { return (float)GetValue(StrokeWidthProperty); }
-            set { SetValue(StrokeWidthProperty, value); }
-        }
-
         public Color StrokeColor
         {
             get { return (Color)GetValue(StrokeColorProperty); }
             set { SetValue(StrokeColorProperty, value); }
         }
 
-        public IEnumerable<Point> Points
+        public float StrokeWidth
         {
-            get { return GetSignaturePoints(); }
-            set { SetSignaturePoints(value); }
+            get { return (float)GetValue(StrokeWidthProperty); }
+            set { SetValue(StrokeWidthProperty, value); }
         }
 
         /// <summary>
@@ -103,11 +111,6 @@ namespace SignaturePad.Forms
             return args.Points;
         }
 
-        private void SetSignaturePoints(IEnumerable<Point> points)
-        {
-            PointsSpecified?.Invoke(this, new PointsEventArgs { Points = points });
-        }
-
         private bool RequestIsBlank()
         {
             var args = new IsBlankRequestedEventArgs();
@@ -115,10 +118,10 @@ namespace SignaturePad.Forms
             return args.IsBlank;
         }
 
-        internal event EventHandler<ImageStreamRequestedEventArgs> ImageStreamRequested;
-        internal event EventHandler<IsBlankRequestedEventArgs> IsBlankRequested;
-        internal event EventHandler<PointsEventArgs> PointsRequested;
-        internal event EventHandler<PointsEventArgs> PointsSpecified;
+        private void SetSignaturePoints(IEnumerable<Point> points)
+        {
+            PointsSpecified?.Invoke(this, new PointsEventArgs { Points = points });
+        }
 
         internal class ImageStreamRequestedEventArgs : EventArgs
         {
@@ -130,6 +133,7 @@ namespace SignaturePad.Forms
             public SignatureImageFormat ImageFormat { get; private set; }
 
             public Task<Stream> ImageStreamTask { get; set; } = Task.FromResult<Stream>(null);
+            public bool UseBackgroundColor { get; set; }
         }
 
         internal class IsBlankRequestedEventArgs : EventArgs

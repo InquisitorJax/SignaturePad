@@ -7,6 +7,7 @@ using SignaturePad.Forms;
 using SignaturePad.Forms.Platform;
 using Color = Xamarin.Forms.Color;
 using Point = Xamarin.Forms.Point;
+
 #if WINDOWS_PHONE
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -24,6 +25,7 @@ using NativeSignaturePadView = SignaturePad.SignaturePadView;
 using NativePoint = CoreGraphics.CGPoint;
 using NativeColor = UIKit.UIColor;
 #elif __ANDROID__
+
 using Android.Graphics;
 using Android.Widget;
 using Xamarin.Forms.Platform.Android;
@@ -31,15 +33,16 @@ using SignaturePad.Forms.Droid;
 using NativeSignaturePadView = SignaturePad.SignaturePadView;
 using NativePoint = System.Drawing.PointF;
 using NativeColor = Android.Graphics.Color;
+
 #endif
 
 [assembly: ExportRenderer(typeof(SignaturePadView), typeof(SignaturePadRenderer))]
-
 #if WINDOWS_PHONE
 namespace SignaturePad.Forms.WindowsPhone
 #elif __IOS__
 namespace SignaturePad.Forms.iOS
 #elif __ANDROID__
+
 namespace SignaturePad.Forms.Droid
 #endif
 {
@@ -93,8 +96,8 @@ namespace SignaturePad.Forms.Droid
             var ctrl = Control;
             if (ctrl != null)
             {
-                var image = ctrl.GetImage();
 #if WINDOWS_PHONE
+                var image = ctrl.GetImage(ctrl.StrokeColor, e.UseBackgroundColor ? ctrl.BackgroundColor : Colors.Transparent);
                 ExtendedImage img = null;
                 if (e.ImageFormat == SignatureImageFormat.Png)
                 {
@@ -117,6 +120,7 @@ namespace SignaturePad.Forms.Droid
                     return null;
                 });
 #elif __IOS__
+                var image = ctrl.GetImage(ctrl.StrokeColor, e.UseBackgroundColor ? ctrl.BackgroundColor : UIColor.Clear);
                 e.ImageStreamTask = Task.Run(() =>
                 {
                     if (e.ImageFormat == SignatureImageFormat.Png)
@@ -130,6 +134,7 @@ namespace SignaturePad.Forms.Droid
                     return null;
                 });
 #elif __ANDROID__
+                var image = ctrl.GetImage(ctrl.StrokeColor, e.UseBackgroundColor ? ctrl.BackgroundColor : Color.Transparent);
                 var stream = new MemoryStream();
                 var format = e.ImageFormat == SignatureImageFormat.Png ? Bitmap.CompressFormat.Png : Bitmap.CompressFormat.Jpeg;
                 e.ImageStreamTask = image
@@ -176,63 +181,6 @@ namespace SignaturePad.Forms.Droid
             if (ctrl != null)
             {
                 ctrl.LoadPoints(e.Points.Select(p => new NativePoint((float)p.X, (float)p.Y)).ToArray());
-            }
-        }
-
-        /// <summary>
-        /// Update all the properties on the native view.
-        /// </summary>
-        private void UpdateAll()
-        {
-            if (Control == null || Element == null)
-            {
-                return;
-            }
-
-            if (Element.BackgroundColor != Color.Default)
-            {
-                Control.BackgroundColor = Element.BackgroundColor.ToNative();
-            }
-            if (!string.IsNullOrEmpty(Element.CaptionText))
-            {
-                Control.CaptionText = Element.CaptionText;
-            }
-            if (Element.CaptionTextColor != Color.Default)
-            {
-                Control.Caption.SetTextColor(Element.CaptionTextColor);
-            }
-            if (!string.IsNullOrEmpty(Element.ClearText))
-            {
-                Control.ClearLabelText = Element.ClearText;
-            }
-            if (Element.ClearTextColor != Color.Default)
-            {
-                Control.ClearLabel.SetTextColor(Element.ClearTextColor);
-            }
-            if (!string.IsNullOrEmpty(Element.PromptText))
-            {
-                Control.SignaturePromptText = Element.PromptText;
-            }
-            if (Element.PromptTextColor != Color.Default)
-            {
-                Control.SignaturePrompt.SetTextColor(Element.PromptTextColor);
-            }
-            if (Element.SignatureLineColor != Color.Default)
-            {
-                var color = Element.SignatureLineColor.ToNative();
-#if WINDOWS_PHONE
-                Control.SignatureLineBrush = new SolidColorBrush(color);
-#else
-                Control.SignatureLineColor = color;
-#endif
-            }
-            if (Element.StrokeColor != Color.Default)
-            {
-                Control.StrokeColor = Element.StrokeColor.ToNative();
-            }
-            if (Element.StrokeWidth > 0)
-            {
-                Control.StrokeWidth = Element.StrokeWidth;
             }
         }
 
@@ -288,6 +236,63 @@ namespace SignaturePad.Forms.Droid
                 Control.StrokeColor = Element.StrokeColor.ToNative();
             }
             else if (property == SignaturePadView.StrokeWidthProperty.PropertyName)
+            {
+                Control.StrokeWidth = Element.StrokeWidth;
+            }
+        }
+
+        /// <summary>
+        /// Update all the properties on the native view.
+        /// </summary>
+        private void UpdateAll()
+        {
+            if (Control == null || Element == null)
+            {
+                return;
+            }
+
+            if (Element.BackgroundColor != Color.Default)
+            {
+                Control.BackgroundColor = Element.BackgroundColor.ToNative();
+            }
+            if (!string.IsNullOrEmpty(Element.CaptionText))
+            {
+                Control.CaptionText = Element.CaptionText;
+            }
+            if (Element.CaptionTextColor != Color.Default)
+            {
+                Control.Caption.SetTextColor(Element.CaptionTextColor);
+            }
+            if (!string.IsNullOrEmpty(Element.ClearText))
+            {
+                Control.ClearLabelText = Element.ClearText;
+            }
+            if (Element.ClearTextColor != Color.Default)
+            {
+                Control.ClearLabel.SetTextColor(Element.ClearTextColor);
+            }
+            if (!string.IsNullOrEmpty(Element.PromptText))
+            {
+                Control.SignaturePromptText = Element.PromptText;
+            }
+            if (Element.PromptTextColor != Color.Default)
+            {
+                Control.SignaturePrompt.SetTextColor(Element.PromptTextColor);
+            }
+            if (Element.SignatureLineColor != Color.Default)
+            {
+                var color = Element.SignatureLineColor.ToNative();
+#if WINDOWS_PHONE
+                Control.SignatureLineBrush = new SolidColorBrush(color);
+#else
+                Control.SignatureLineColor = color;
+#endif
+            }
+            if (Element.StrokeColor != Color.Default)
+            {
+                Control.StrokeColor = Element.StrokeColor.ToNative();
+            }
+            if (Element.StrokeWidth > 0)
             {
                 Control.StrokeWidth = Element.StrokeWidth;
             }
